@@ -35,8 +35,11 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+// return a TokenType and Literal for current byte then increment w/ readChar()
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+
+	l.skipWhitespace()
 
 	switch l.ch {
 	case '=':
@@ -58,10 +61,39 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+		// read identifier if ch is legal symbol
+	default:
+		if isLetter(l.ch) {
+			tok.Literal = l.readIdentifier()
+			tok.Type = token.LookupIdent(tok.Literal)
+			return tok
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	}
-
 	l.readChar()
 	return tok
+}
+
+func (l *Lexer) readIdentifier() string {
+	position := l.position
+	// while loop
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+func isLetter(ch byte) bool {
+	// checks that byte is within letter ASCII ranges
+	// inclusion of '_' allows us to use it in identifiers
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func (l *Lexer) skipWhitespace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+		l.readChar()
+	}
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
