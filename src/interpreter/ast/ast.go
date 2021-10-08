@@ -58,3 +58,12 @@ type Identifier struct {
 // ex: let x = valueProducingIdentifier
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
+
+type ReturnStatement struct {
+	// a 'RETURN' token
+	Token token.Token
+	Value Expression
+}
+
+func (rs *ReturnStatement) statementNode()       {}
+func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }

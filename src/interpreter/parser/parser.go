@@ -50,6 +50,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 		//TODO nil stmts are getting through this some how
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
+			fmt.Println(program.Statements)
 		}
 		p.nextToken()
 	}
@@ -61,6 +62,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -85,6 +88,18 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	p.nextToken()
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
 	}
 
 	return stmt
