@@ -16,6 +16,7 @@ func TestLetStatements(t *testing.T) {
 	p := New(l)
 
 	program := p.ParseProgram()
+	checkParserErrors(t, p)
 
 	// should result in an AST
 	if program == nil {
@@ -44,8 +45,24 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.Errors()
+
+	if len(errors) == 0 {
+		return
+	}
+
+	t.Errorf("parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error: %q", msg)
+	}
+}
+
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	// TokenLiteral() is a getter for the literal value of the token
+	//TODO bug causing panic due to an empty statement being passed in
+	//fmt.Println(s)
+	//fmt.Println(name)
 	if s.TokenLiteral() != "let" {
 		t.Errorf("s.TokenLiteral not 'let'. got=%q", s.TokenLiteral())
 		return false

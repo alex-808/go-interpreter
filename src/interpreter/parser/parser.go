@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/alex-davis-808/go-interpreter/src/interpreter/ast"
 	"github.com/alex-davis-808/go-interpreter/src/interpreter/lexer"
 	"github.com/alex-davis-808/go-interpreter/src/interpreter/token"
@@ -9,6 +10,7 @@ import (
 type Parser struct {
 	l *lexer.Lexer
 
+	errors []string
 	// similar to position and peekPosition but iterate over tokens instead of chars
 	curToken  token.Token
 	peekToken token.Token
@@ -16,13 +18,18 @@ type Parser struct {
 
 func New(l *lexer.Lexer) *Parser {
 	// Instantiate new parser by passing in a lexer
-	p := &Parser{l: l}
+	p := &Parser{l: l, errors: []string{}}
 
 	// Read two tokens so both curToken and peekToken are set
 	p.nextToken()
 	p.nextToken()
 
 	return p
+}
+
+// getter for Parser errors
+func (p *Parser) Errors() []string {
+	return p.errors
 }
 
 // on first call will set only peekToken. On second will set curToken as well
@@ -37,8 +44,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for p.curToken.Type != token.EOF {
+	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
+
+		//TODO nil stmts are getting through this some how
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
@@ -59,6 +68,7 @@ func (p *Parser) parseStatement() ast.Statement {
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
+	// expect the next token after 'let' to be an IDENT
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
@@ -66,6 +76,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	// set the statement name to be an Identifier version of the current token
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
+	// expect the next token after the Identifier to be an 'ASSIGN'
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
@@ -89,12 +100,19 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
+// if peek is as expected, next token, else add error
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
 	} else {
+		p.peekError(t)
 		return false
 	}
+}
 
+// adds error to Parser.errors
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
