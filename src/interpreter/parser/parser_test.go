@@ -7,6 +7,43 @@ import (
 	"github.com/alex-davis-808/go-interpreter/src/interpreter/lexer"
 )
 
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	// check that our parser detects the statement
+	if len(program.Statements) != 1 {
+		t.Fatalf("program doesn't have enough statements. got=%d", len(program.Statements))
+	}
+
+	// check that the statement detected is of ast.ExpressionStatement type
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	// check that the expression is of an ast.Identifier type
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp no *ast.Identifier. got %T", stmt.Expression)
+	}
+
+	// check the IDENT's value
+	if ident.Value != "foobar" {
+		t.Errorf("ident.Value not %s. got=%s", "foobar", ident.TokenLiteral())
+	}
+
+	// check the IDENT's .TokenLiteral()
+	if ident.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar", ident.TokenLiteral())
+	}
+}
+
 func TestReturnSTestLetStatements(t *testing.T) {
 	input := `
 	return 5;
